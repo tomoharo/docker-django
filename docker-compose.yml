@@ -1,0 +1,62 @@
+version: "3"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./django/Dockerfile
+    command: bash -c "python3 manage.py migrate && python3 manage.py collectstatic --no-input --clear && python3 manage.py runserver  0.0.0.0:8888"
+    ports:
+      - 8000:8000
+      - 8888:8888
+    volumes:
+      - ./django:/code
+      - ./.env:/code/.env
+      - static:/code/static
+    links:
+      - db
+    entrypoint:
+      - dockerize
+      - -timeout
+      - 60s
+      - -wait
+      - tcp://db:3309
+
+  web:
+    image: steveltn/https-portal:1
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAINS: "localhost"
+      STAGE: "local"
+    volumes:
+      - ./nginx/default.ssl.conf.erb:/var/lib/nginx-conf/default.ssl.conf.erb:ro
+      - ./nginx/ssl:/var/lib/https-portal
+      - static:/code/static
+    depends_on:
+      - app
+
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: mysql
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASES_PASSWORD}
+      MYSQL_USER: ${DATABASES_USER}
+      MYSQL_DATABASE: ${DATABASES_NAME}
+      MYSQL_PASSWORD: ${DATABASES_PASSWORD}
+      MYSQL_TCP_PORT: 3309
+    ports:
+      - 3309:3306
+    expose:
+      - 3309
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+
+volumes:
+  mysqldata:
+  static:
+
+

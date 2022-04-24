@@ -1,0 +1,32 @@
+version: "3"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./django/Dockerfile
+    command: bash -c "python manage.py migrate && python manage.py collectstatic --no-input --clear && gunicorn --workers 3  --bind  0.0.0.0:8000 test_application.wsgi:application"
+    expose:
+      - "8000"
+    volumes:
+      - static:/code/static
+    environment:
+      - DJANGO_SETTINGS_MODULE=mysite.pro_settings
+
+  web:
+    image: steveltn/https-portal:1
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAINS: "${DOMAIN}"
+      STAGE: "production"
+    volumes:
+      - ./nginx/default.ssl.conf.erb:/var/lib/nginx-conf/default.ssl.conf.erb:ro
+      - ./nginx/ssl:/var/lib/https-portal
+      - static:/code/static
+    depends_on:
+      - app
+
+volumes:
+  static:
+
