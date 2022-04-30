@@ -8,9 +8,19 @@ services:
     expose:
       - "8000"
     volumes:
+      - ./django:/code
+      - ./.env:/code/.env
       - static:/code/static
     environment:
       - DJANGO_SETTINGS_MODULE=mysite.pro_settings
+    links:
+      - db
+    entrypoint:
+      - dockerize
+      - -timeout
+      - 60s
+      - -wait
+      - tcp://db:3309
 
   web:
     image: steveltn/https-portal:1
@@ -27,6 +37,27 @@ services:
     depends_on:
       - app
 
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: mysql
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASES_PASSWORD}
+      MYSQL_USER: ${DATABASES_USER}
+      MYSQL_DATABASE: ${DATABASES_NAME}
+      MYSQL_PASSWORD: ${DATABASES_PASSWORD}
+      MYSQL_TCP_PORT: 3309
+    ports:
+      - 3309:3306
+    expose:
+      - 3309
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+
 volumes:
+  mysqldata:
   static:
+
 
