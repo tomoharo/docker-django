@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./django/Dockerfile
+    container_name: django
     command: bash -c "python3 manage.py migrate && python3 manage.py collectstatic --no-input --clear && python3 manage.py runserver  0.0.0.0:8888"
     ports:
       - 8000:8000
@@ -23,6 +24,7 @@ services:
 
   web:
     image: steveltn/https-portal:1
+    container_name: nginx
     ports:
       - "80:80"
       - "443:443"

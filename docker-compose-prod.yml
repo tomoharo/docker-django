@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./django/Dockerfile
+    container_name: django
     command: bash -c "python manage.py migrate && python manage.py collectstatic --no-input --clear && gunicorn --workers 3  --bind  0.0.0.0:8000 mysite.wsgi:application"
     expose:
       - "8000"
@@ -24,6 +25,7 @@ services:
 
   web:
     image: steveltn/https-portal:1
+    container_name: nginx
     ports:
       - "80:80"
       - "443:443"
